@@ -22,11 +22,18 @@ typedef struct s_philo
 {
     int number;
     long last_meal;
+    pthread_mutex_t *right_fork;
+    pthread_mutex_t *left_fork;
     t_data *data;
 } t_philo;
 
-
-
+pthread_mutex_t *fork_parsing(t_data *data, pthread_mutex_t *fork);
+int simulation (t_data *data);
+void *action(void *structure);
+void thinking(t_philo *phil);
+void sleeping(t_philo *phil);
+void eating(t_philo *phil);
+long   get_time(void);
 int check_arguments(int argc, char **argv, t_data *data);
 int	pos_number(char *str);
 int	ft_atoi(const char *str);

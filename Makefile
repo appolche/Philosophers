@@ -5,6 +5,7 @@ HEADER		=	philo.h
 SRCS		= 	philo.c\
 				utils.c\
 				error_parse.c\
+				action.c\
 
 OBJS		=	$(SRCS:.c=.o)
 
