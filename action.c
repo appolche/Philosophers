@@ -22,6 +22,8 @@ void eating(t_philo *phil)
     pthread_mutex_lock(phil->right_fork);
     printf("%lu ms | Philo #%d has taken a right_fork.\n", (get_time() - phil->data->start_time), phil->number + 1);
     printf("%lu ms | Philo #%d is eating.\n", (get_time() - phil->data->start_time), phil->number + 1);
+    phil->last_meal = get_time();
+    phil->meal_counter++;
     usleep(phil->data->time_to_eat * 1000);
     pthread_mutex_unlock(phil->right_fork);
     pthread_mutex_unlock(phil->left_fork);

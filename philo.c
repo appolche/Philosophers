@@ -8,6 +8,32 @@ long   get_time(void)
     return (time.tv_sec * 1000 + time.tv_usec / 1000); // секунды и микросекунды - переводим оба в миллисекунды
 }
 
+void * ft_killer(void *structure)
+{
+    t_philo *phil = (t_philo*) structure;
+    int i;
+
+    i = -1;
+
+    while (1)
+    {
+        i = -1;
+        while (++i < phil->data->number_of_philo)
+        {
+            if ((get_time() - phil[i].last_meal) >= phil->data->time_to_die)
+            {
+                printf("%lu ms | Phil #%d died. \n", (get_time() - phil->data->start_time), phil[i].number);
+                return (NULL);
+            }
+            else if (phil->data->must_eat_count >= 0 && phil[i].meal_counter >= phil->data->must_eat_count)
+            {
+                printf("%lu ms | simulation stopped\n", (get_time() - phil->data->start_time));
+                return (NULL);
+            }
+        }
+    }
+}
+
 pthread_mutex_t *fork_parsing(t_data *data, pthread_mutex_t *fork)
 {
     int         j;
@@ -25,14 +51,14 @@ pthread_mutex_t *fork_parsing(t_data *data, pthread_mutex_t *fork)
 
 int simulation (t_data *data)
 {
-    pthread_t   *thread;
+    pthread_t   *thread; 
     t_philo     *phil;
     pthread_mutex_t *fork;
     int         i;
 
     i = -1;
     fork = NULL;
-    thread = malloc(sizeof(pthread_t) * data->number_of_philo);
+    thread = malloc(sizeof(pthread_t) * data->number_of_philo + 1);
     if (!thread)
         return (0);
     phil = malloc(sizeof(t_philo) * data->number_of_philo);
@@ -48,12 +74,14 @@ int simulation (t_data *data)
         phil[i].number = i;
         phil[i].last_meal = data->start_time;
         phil[i].data = data;
+        phil[i].meal_counter = 0;
         phil[i].left_fork = &fork[i];
         phil[i].right_fork = &fork[(i + 1) % phil->data->number_of_philo];
         pthread_create(&thread[i], NULL, action, (void*)&phil[i]);
         usleep(100);
     }
-    pthread_join(thread[0], NULL);
+    pthread_create(&thread[i], NULL, ft_killer, (void*)phil);
+    pthread_join(thread[i], NULL);
     return (0);
 }
 
