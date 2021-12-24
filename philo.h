@@ -16,6 +16,7 @@ typedef struct s_data
     long time_to_sleep;
     int must_eat_count;
     long start_time;
+    pthread_mutex_t print_mutex;
 } t_data;
 
 typedef struct s_philo

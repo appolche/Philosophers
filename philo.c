@@ -21,16 +21,19 @@ void * ft_killer(void *structure)
         while (++i < phil->data->number_of_philo)
         {
             if ((get_time() - phil[i].last_meal) >= phil->data->time_to_die)
-            {
-                printf("%lu ms | Phil #%d died. \n", (get_time() - phil->data->start_time), phil[i].number);
+            {   
+                pthread_mutex_lock(&phil->data->print_mutex);
+                printf("%lu ms | Philo #%d died. \n", (get_time() - phil->data->start_time), phil[i].number + 1);
                 return (NULL);
             }
-            else if (phil->data->must_eat_count >= 0 && phil[i].meal_counter >= phil->data->must_eat_count)
+            else if (phil->data->must_eat_count >= 0 && phil[i].meal_counter > phil->data->must_eat_count)
             {
+                pthread_mutex_lock(&phil->data->print_mutex);
                 printf("%lu ms | simulation stopped\n", (get_time() - phil->data->start_time));
                 return (NULL);
             }
         }
+        usleep(100);    
     }
 }
 
@@ -68,7 +71,7 @@ int simulation (t_data *data)
     if (!fork)
         return(0);
     data->start_time = get_time();
-    printf("start_time: %lu\n", data->start_time);
+    //printf("start_time: %lu\n", data->start_time);
     while (++i < data->number_of_philo)
     {
         phil[i].number = i;
@@ -90,7 +93,10 @@ int main(int argc, char**argv)
     t_data *data;
 
     if (argc < 5 || argc > 6)
+    {
+        printf("usage: philo [number_of_philosophers] [time_to_die]\n [time_to_eat] [time_to_sleep]\n [number_of_times_each_philosopher_must_eat]\n");
         return (1);
+    }
     data = malloc(sizeof(t_data));
     if (!data)
         return(1);
