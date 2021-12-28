@@ -1,113 +1,78 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   philo.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: dleaves <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/12/28 18:55:31 by dleaves           #+#    #+#             */
+/*   Updated: 2021/12/28 18:55:41 by dleaves          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "philo.h"
 
-long   get_time(void)
+t_philo	*phil_init(t_data *data)
 {
-    struct timeval time;
+	t_philo	*phil;
+	int		i;
 
-    gettimeofday(&time, NULL);
-    return (time.tv_sec * 1000 + time.tv_usec / 1000); // секунды и микросекунды - переводим оба в миллисекунды
+	i = -1;
+	phil = malloc(sizeof(t_philo) * data->number_of_philo);
+	if (!phil)
+	{
+		free_func(NULL, data);
+		return (NULL);
+	}
+	while (++i < data->number_of_philo)
+	{
+		phil[i].number = i;
+		phil[i].data = data;
+		phil[i].meal_counter = 0;
+		phil[i].left_fork = &data->fork[i];
+		phil[i].right_fork = &data->fork[(i + 1) % phil->data->number_of_philo];
+	}
+	return (phil);
 }
 
-void * ft_killer(void *structure)
+int	fork_init(t_data *data)
 {
-    t_philo *phil = (t_philo*) structure;
-    int i;
+	int	i;
 
-    i = -1;
-
-    while (1)
-    {
-        i = -1;
-        while (++i < phil->data->number_of_philo)
-        {
-            if ((get_time() - phil[i].last_meal) >= phil->data->time_to_die)
-            {   
-                pthread_mutex_lock(&phil->data->print_mutex);
-                printf("%lu ms | Philo #%d died. \n", (get_time() - phil->data->start_time), phil[i].number + 1);
-                return (NULL);
-            }
-            else if (phil->data->must_eat_count >= 0 && phil[i].meal_counter > phil->data->must_eat_count)
-            {
-                pthread_mutex_lock(&phil->data->print_mutex);
-                printf("%lu ms | simulation stopped\n", (get_time() - phil->data->start_time));
-                return (NULL);
-            }
-        }
-        usleep(100);    
-    }
+	i = -1;
+	data->fork = malloc(sizeof(pthread_mutex_t) * data->number_of_philo);
+	if (!data->fork)
+		return (0);
+	while (++i < data->number_of_philo)
+		pthread_mutex_init(&data->fork[i], NULL);
+	return (1);
 }
 
-pthread_mutex_t *fork_parsing(t_data *data, pthread_mutex_t *fork)
+int	main(int argc, char**argv)
 {
-    int         j;
+	t_data	*data;
+	t_philo	*phil;
 
-    j = -1;
-    fork = malloc(sizeof(pthread_mutex_t) * data->number_of_philo);
-    if (!fork)
-         return (NULL);
-    while (++j < data->number_of_philo)
-    {
-        pthread_mutex_init(&fork[j], NULL);
-    }
-    return (fork);
-}
-
-int simulation (t_data *data)
-{
-    pthread_t   *thread; 
-    t_philo     *phil;
-    pthread_mutex_t *fork;
-    int         i;
-
-    i = -1;
-    fork = NULL;
-    thread = malloc(sizeof(pthread_t) * data->number_of_philo + 1);
-    if (!thread)
-        return (0);
-    phil = malloc(sizeof(t_philo) * data->number_of_philo);
-    if (!phil)
-        return (0);
-    fork = fork_parsing(data, fork);
-    if (!fork)
-        return(0);
-    data->start_time = get_time();
-    //printf("start_time: %lu\n", data->start_time);
-    while (++i < data->number_of_philo)
-    {
-        phil[i].number = i;
-        phil[i].last_meal = data->start_time;
-        phil[i].data = data;
-        phil[i].meal_counter = 0;
-        phil[i].left_fork = &fork[i];
-        phil[i].right_fork = &fork[(i + 1) % phil->data->number_of_philo];
-        pthread_create(&thread[i], NULL, action, (void*)&phil[i]);
-        usleep(100);
-    }
-    pthread_create(&thread[i], NULL, ft_killer, (void*)phil);
-    pthread_join(thread[i], NULL);
-    return (0);
-}
-
-int main(int argc, char**argv)
-{
-    t_data *data;
-
-    if (argc < 5 || argc > 6)
-    {
-        printf("usage: philo [number_of_philosophers] [time_to_die]\n [time_to_eat] [time_to_sleep]\n [number_of_times_each_philosopher_must_eat]\n");
-        return (1);
-    }
-    data = malloc(sizeof(t_data));
-    if (!data)
-        return(1);
-    if (check_arguments(argc, argv, data) == 1)
-    {
-        free(data);
-        printf ("wrong arguments\n");
-        return (1);
-    }
-    if (!simulation(data))
-        return (1);
-    printf("Success\n");
-    return (0);
+	data = malloc(sizeof(t_data));
+	if (!data)
+		return (1);
+	if (argc < 5 || argc > 6 || (check_arguments(argc, argv, data) == 1))
+	{
+		free(data);
+		return (print_message());
+	}
+	if (pthread_mutex_init(&data->print_mutex, NULL))
+	{
+		free(data);
+		return (1);
+	}
+	if (!fork_init(data))
+		return (1);
+	phil = phil_init(data);
+	if (!phil)
+		return (1);
+	if (!simulation(data, phil))
+		return (1);
+	free_func(phil, data);
+	return (0);
 }

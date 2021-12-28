@@ -3,15 +3,16 @@ NAME		=	philo
 HEADER		=	philo.h
 
 SRCS		= 	philo.c\
-				utils.c\
-				error_parse.c\
+				simulation_start.c\
 				action.c\
+				error_parse.c\
+				utils.c\
 
 OBJS		=	$(SRCS:.c=.o)
 
 PHILO_FLAGS	=	-pthread
 FLAGS		=	-Wall -Wextra -Werror -g 
-CC			=	clang
+CC			=	gcc
 GCC			=	$(CC) $(FLAGS)
 
 
