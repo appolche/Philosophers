@@ -21,7 +21,7 @@ void	free_func(t_philo *phil, t_data *data)
 	{
 		while (++i < data->number_of_philo)
 			pthread_mutex_destroy(&data->fork[i]);
-		free (fork);
+		free (data->fork);
 	}
 	if (phil)
 		free (phil);

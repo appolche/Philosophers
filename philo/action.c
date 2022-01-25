@@ -42,13 +42,13 @@ void	eating(t_philo *phil)
 		(get_time() - phil->data->start_time), phil->number + 1);
 	pthread_mutex_unlock(&phil->data->print_mutex);
 	pthread_mutex_lock(phil->right_fork);
+	phil->last_meal = get_time();
 	pthread_mutex_lock(&phil->data->print_mutex);
 	printf("%lu ms | #%d has taken a fork.\n",
 		(get_time() - phil->data->start_time), phil->number + 1);
 	printf("%lu ms | #%d is eating.\n",
 		(get_time() - phil->data->start_time), phil->number + 1);
 	pthread_mutex_unlock(&phil->data->print_mutex);
-	phil->last_meal = get_time();
 	phil->meal_counter++;
 	time_delay(phil->data->time_to_eat);
 	pthread_mutex_unlock(phil->right_fork);

@@ -12,59 +12,46 @@
 
 #include "philo.h"
 
-void	print_death_notice(t_philo	*phil, int i)
+void	print_death_notice(t_philo	*phil)
 {
-	pthread_mutex_lock(&phil->data->print_mutex);
+	sem_wait(phil->data->print_access);
 	printf("%lu ms | #%d died. \n",
-		(get_time() - phil->data->start_time), phil[i].number + 1);
-}
-
-void	*ft_killer(void *structure)
-{
-	t_philo	*phil;
-	int		i;
-
-	i = -1;
-	phil = (t_philo *)structure;
-	while (1)
-	{
-		i = -1;
-		while (++i < phil->data->number_of_philo)
-		{
-			if ((get_time() - phil[i].last_meal) >= phil->data->time_to_die)
-			{
-				print_death_notice(phil, i);
-				return (NULL);
-			}
-			else if (phil->data->must_eat_count >= 0
-				&& phil[i].meal_counter > phil->data->must_eat_count)
-			{
-				pthread_mutex_lock(&phil->data->print_mutex);
-				return (NULL);
-			}
-		}
-		usleep(100);
-	}
+		(get_time() - phil->data->start_time), phil->number);
 }
 
 int	simulation(t_data *data, t_philo *phil)
 {
 	int	i;
+	int status;
+	pid_t pid;
 
 	i = -1;
-	data->thread = malloc(sizeof(pthread_t) * data->number_of_philo + 1);
-	if (!data->thread)
-		return (1);
 	data->start_time = get_time();
 	while (++i < data->number_of_philo)
 	{
-		phil[i].last_meal = data->start_time;
-		pthread_create(&data->thread[i], NULL, action, (void *)&phil[i]);
-		pthread_detach(data->thread[i]);
-		usleep(100);
+		pid = fork();
+		if (pid == -1)
+			return (1);
+		if (pid == 0)
+		{
+			phil[i].last_meal = data->start_time;
+			action(&phil[i], data);
+		}
+		else
+		{
+			phil[i].pid = pid;
+		}
 	}
-	pthread_create(&data->thread[i], NULL, ft_killer, (void *)phil);
-	pthread_join(data->thread[i], NULL);
-	usleep(500000);
+	wait(&status);
+	if (WEXITSTATUS(status) == 1)
+		kill(0, SIGTERM);
+	else 
+	{
+		while (++i < data->number_of_philo)
+			printf("%d - ", phil[i].pid);
+		i = -1;
+		while (++i < data->number_of_philo)
+			waitpid(phil[i].pid, NULL, 0);
+	}
 	return (0);
 }

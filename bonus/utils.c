@@ -26,7 +26,7 @@ void	time_delay(int time_to_waste)
 
 	start = get_time();
 	while (get_time() - start < time_to_waste)
-		usleep(100);
+		usleep(10);
 }
 
 int	positive_number(char *str)
